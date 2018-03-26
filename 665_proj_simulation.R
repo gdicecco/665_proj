@@ -4,7 +4,7 @@ library(dplyr)
 #simulate dataset for one species
 data <- data.frame("year" = sample(seq(1990, 2000, by = 1), 100, replace = T),
                    "route" = sample(seq(1,10, by = 1), 100, replace = T),
-                   "count" = sample(seq(0,30, by = 1), 100, replace = T), 
+                   "count" = rpois(100, 2), 
                    "observer" = sample(seq(1,20, by = 1), 100, replace = T))
   
 #observer-route ID
