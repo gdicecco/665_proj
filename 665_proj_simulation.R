@@ -38,17 +38,14 @@ t <- data$year
 j <- data$obsroute
 
 #Model format
-#log(counts) = Si + Bt(t - t*) + wj + nI(j,t) + Yit + Eijt
+#log(counts) = Si + Bt(t - t*) + wj + nI(j,t)
 #poisson distribution
+#t* is the first year of observations
 
 ## Hyperparameters
 #w ~ N(0, sigmaW) observer
-#Y ~ N(0, sigmaYi) year
-#E ~ N(0, sigmaE) overdispersion
 
 #sigmaW ~ IG(0, 1000)
-#sigmaYi ~ IG(0, 1000) *allowed to vary among strata
-#sigmaE ~ IG(0, 1000)
 
 ## Parameters
 #S ~ N(0, 1000) - strata specific intercept
