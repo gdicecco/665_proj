@@ -1,0 +1,11 @@
+model{
+    for(i in 1:n){
+      y[i] ~ dpois(lambda[i])
+      lambda[i] <- exp(b1*X[i, 2] + b2*X[i, 3] + b3*X[i, 79])
+    }
+
+    b1 ~ dnorm(0.0, 1000)
+    b2 ~ dnorm(0.0, 1000)
+    b3 ~ dnorm(0.0, 1000)
+    }
+    
