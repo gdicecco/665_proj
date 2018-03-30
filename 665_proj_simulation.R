@@ -123,6 +123,6 @@ countRE <- jags(data=countData, inits=parInit, param=parNamesRE,
                  n.iter=2000, n.burnin=100, model.file="countsRE.txt")
 rePars <- getJagsPars(countRE)
 fixed  <- rePars$fixed
-beta   <- fixed[1:4,1] #get very very small with random effect
+beta   <- fixed[1:4,1] #get very very small with random effect for simulated dataset
 alpha  <- rePars$mean
 
