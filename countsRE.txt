@@ -5,10 +5,12 @@ model{
     }
     
     for(j in 1:nobs){
-      a1[j] ~ dnorm(0.0, sigma)
+    a1[j] ~ dnorm(0.0, sigma)
     }
     
     sigma ~ dgamma(0.001, 1000)
+    tau <- pow(sigma, -0.5)
+
     b1 ~ dnorm(0.0, 1000)
     b2 ~ dnorm(0.0, 1000)
     b3 ~ dnorm(0.0, 1000)
