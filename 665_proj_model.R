@@ -30,11 +30,15 @@ RT1.routes <- merge(RT1, routes[ , c("statenum", "stateroute", "latitude", "long
 routes.short <- subset(RT1.routes, year >= 1969, select = c("statenum","stateroute", "year", "obsn", "latitude", "longitude", "bcr"))
 counts$stateroute <- counts$statenum*1000 + counts$route
 
+library(R2jags)
+results <- matrix(0, ncol = 27)
+colnames(results) <- colnames(counts.merge)
+
+for(aou in species$aou) {
 #Subset counts by species
 counts.short <- counts %>%
   filter(year >= 1969) %>%
-  #filter(aou %in% species$aou)
-  filter(aou == 2890)
+  filter(aou == aou)
 counts.merge <- merge(routes.short, counts.short, by = c("stateroute", "year"))
 
 #Add obs-route ID and dummy variable for first year observers
@@ -100,7 +104,6 @@ cat("model{
     ", fill = T, file = "countsFixed.txt"
 )
 
-library(R2jags)
 countData <- list(y = y, X = X, n = n)
 parNames <- c("b1", "b2", "b3")
 countFit <- jags(data = countData, param = parNames,
@@ -108,7 +111,7 @@ countFit <- jags(data = countData, param = parNames,
 # 1 spp - < 2 hours
 print(countFit)
 countFit.out <- countFit$BUGSoutput$summary
-write.csv(countFit.out, "bobwhite_fixed_jagssummary.csv")
+write.csv(countFit.out, paste0(aou, "_fixed_jagssummary.csv", sep = ""))
 
 Sys.time()
 
@@ -156,7 +159,16 @@ rePars <- getJagsPars(countRE)
 fixed  <- rePars$fixed
 beta   <- fixed[1:4,1] 
 alpha  <- rePars$mean
-write.csv(fixed, "bobwhite_jagsRE_fixed.csv", row.names = T)
-write.csv(alpha, "bobwhite_jagsRE_re.csv")
+write.csv(fixed, paste0(aou, "_beta_jagsRE.csv", sep = ""), row.names = T)
+write.csv(alpha, paste0(aou, "_alpha_jagsRE.csv", sep = ""))
 
-counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$t)
+#calculate strata specific abundance indices
+counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$t) #model with RE
+fixedb1 <- countFit$BUGSoutput$mean$b1
+fixedb2 <- countFit$BUGSoutput$mean$b2
+counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$t)
+
+results <- rbind(results, counts.merge)
+}
+
+write.csv(results, "counts_w_modeloutput.csv", row.names = F)
