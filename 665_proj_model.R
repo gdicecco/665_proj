@@ -41,7 +41,7 @@ colnames(dics) <- c("aou", "jags", "dic")
 
 spp15 <- species[1:15, ]
 
-for(i in 1:length(spp15$aou)) {
+for(i in 1:1) {
   AOU <- spp15$aou[i]
 #Subset counts by species
 counts.short <- bbscounts %>%
@@ -80,8 +80,9 @@ Sys.time()
 #JAGS model of counts with random effects for year and obsroute
 s <- as.character(paste0(counts.merge$statenum.x, counts.merge$bcr, sep = ""))
 sall <- sort(unique(s))
-i <- match(s, sall)
-counts.merge$strata <- i
+is <- match(s, sall)
+counts.merge$strata <- is
+nstrata <- max(is)
 
 j <- counts.merge$obsroute
 t <- counts.merge$year - 1968
@@ -102,11 +103,14 @@ n <- length(y)
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1*X[i, 2] + b2*X[i,2]*X[i, 3] + b3*X[i, 5])
+    lambda[i] <- exp(b1[is[i]]*X[i, 2] + b2[is[i]]*X[i, 3] + b3*X[i, 5])
     }
     
-    b1 ~ dnorm(0.0, 1000)
-    b2 ~ dnorm(0.0, 1000)
+    for(k in 1:nstrata) {
+    b1[k] ~ dnorm(0.0, 1000)
+    b2[k] ~ dnorm(0.0, 1000)
+    }
+
     b3 ~ dnorm(0.0, 1000)
     }
     ", fill = T, file = "countsFixed.txt"
@@ -137,8 +141,13 @@ nobs <- max(ix)            # no. observers
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1*X[i, 2] + b2*X[i,2]*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
+    lambda[i] <- exp(b1[is[i]]*X[i, 2] + b2[is[i]]*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
     }
+
+for(k in 1:nstrata) {
+    b1[k] ~ dnorm(0.0, 1000)
+    b2[k] ~ dnorm(0.0, 1000)
+}
     
     for(j in 1:nobs){
     a1[j] ~ dnorm(0.0, sigma)
@@ -146,8 +155,6 @@ cat("model{
     
     sigma ~ dgamma(0.001, 1000)
 
-    b1 ~ dnorm(0.0, 1000)
-    b2 ~ dnorm(0.0, 1000)
     b3 ~ dnorm(0.0, 1000)
     }
     ", fill = T, file = "countsRE.txt"
@@ -178,13 +185,13 @@ write.csv(fixed, paste0(AOU, "_beta_jagsRE.csv", sep = ""), row.names = T)
 write.csv(alpha, paste0(AOU, "_alpha_jagsRE.csv", sep = ""))
 
 #calculate strata specific abundance indices
-counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$strata*counts.merge$t) #model with RE
-fixedb1 <- countFit$BUGSoutput$mean$b1
-fixedb2 <- countFit$BUGSoutput$mean$b2
-counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$strata*counts.merge$t)
+#counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$strata*counts.merge$t) #model with RE
+#fixedb1 <- countFit$BUGSoutput$mean$b1
+#fixedb2 <- countFit$BUGSoutput$mean$b2
+#counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$strata*counts.merge$t)
 
-results <- rbind(results, counts.merge)
+#results <- rbind(results, counts.merge)
 }
 
 write.csv(dics, "DIC_all_spp_models.csv", row.names = F)
-write.csv(results, "counts_w_modeloutput.csv", row.names = F)
+#write.csv(results, "counts_w_modeloutput.csv", row.names = F)
