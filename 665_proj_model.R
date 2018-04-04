@@ -103,7 +103,7 @@ n <- length(y)
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1[is[i]]*X[i, 2] + b2[is[i]]*X[i, 3] + b3*X[i, 5])
+    lambda[i] <- exp(b1[is[i]] + b2[is[i]]*X[i, 3] + b3*X[i, 5])
     }
     
     for(k in 1:nstrata) {
@@ -141,7 +141,7 @@ nobs <- max(ix)            # no. observers
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1[is[i]]*X[i, 2] + b2[is[i]]*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
+    lambda[i] <- exp(b1[is[i]] + b2[is[i]]*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
     }
 
 for(k in 1:nstrata) {
