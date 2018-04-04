@@ -13,7 +13,7 @@ source("clarkFunctions2018.r")
 #Read in BBS data
 ##Note: on mac once connected to Bioark server, path is "/Volumes/hurlbertlab/Databases/BBS/2017/filename.csv"
 routes <- read.csv("\\\\Bioark.bio.unc.edu\\hurlbertlab\\Databases\\BBS\\2017\\bbs_routes_20170712.csv")
-counts <- read.csv("\\\\Bioark.bio.unc.edu\\hurlbertlab\\Databases\\BBS\\2017\\bbs_counts_20170712.csv")
+bbscounts <- read.csv("\\\\Bioark.bio.unc.edu\\hurlbertlab\\Databases\\BBS\\2017\\bbs_counts_20170712.csv")
 species <- read.csv("\\\\Bioark.bio.unc.edu\\hurlbertlab\\Databases\\BBS\\2017\\bbs_species_20170712.csv")
 weather <- read.csv("\\\\Bioark.bio.unc.edu\\hurlbertlab\\Databases\\BBS\\2017\\bbs_weather_20170712.csv")
 bcrshp <- readOGR("\\\\Bioark.bio.unc.edu\\hurlbertlab\\DiCecco\\bcr_terrestrial_shape\\BCR_Terrestrial_master.shp") #BCRs
@@ -28,17 +28,25 @@ weather$stateroute <-weather$statenum*1000 + weather$route
 RT1 <- subset(weather, runtype == 1, select = c("stateroute", "year", "obsn"))
 RT1.routes <- merge(RT1, routes[ , c("statenum", "stateroute", "latitude", "longitude","bcr")], by = "stateroute", all.x = TRUE)
 routes.short <- subset(RT1.routes, year >= 1969, select = c("statenum","stateroute", "year", "obsn", "latitude", "longitude", "bcr"))
-counts$stateroute <- counts$statenum*1000 + counts$route
+bbscounts$stateroute <- bbscounts$statenum*1000 + bbscounts$route
 
 library(R2jags)
 results <- matrix(0, ncol = 27)
-colnames(results) <- colnames(counts.merge)
+colnames(results) <- c("stateroute", "year", "statenum.x", "obsn", "latitude", "longitude",
+                       "bcr", "record_id", "countrynum", "statenum.y", "route", "rpid", "aou",
+                       "count10", "count20", "count30", "count40", "count50", "stoptotal",
+                       "speciestotal", "obsroute", "firstyr", "strata", "t", "ix", "abundind", "fixedabundind")
+dics <- matrix(0, ncol = 3)
+colnames(dics) <- c("aou", "jags", "dic")
 
-for(aou in species$aou) {
+spp15 <- species[1:15, ]
+
+for(i in 1:length(spp15$aou)) {
+  AOU <- spp15$aou[i]
 #Subset counts by species
-counts.short <- counts %>%
+counts.short <- bbscounts %>%
   filter(year >= 1969) %>%
-  filter(aou == aou)
+  filter(aou == AOU)
 counts.merge <- merge(routes.short, counts.short, by = c("stateroute", "year"))
 
 #Add obs-route ID and dummy variable for first year observers
@@ -94,7 +102,7 @@ n <- length(y)
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1*X[i, 2] + b2*X[i, 3] + b3*X[i, 5])
+    lambda[i] <- exp(b1*X[i, 2] + b2*X[i,2]*X[i, 3] + b3*X[i, 5])
     }
     
     b1 ~ dnorm(0.0, 1000)
@@ -111,7 +119,10 @@ countFit <- jags(data = countData, param = parNames,
 # 1 spp - < 2 hours
 print(countFit)
 countFit.out <- countFit$BUGSoutput$summary
-write.csv(countFit.out, paste0(aou, "_fixed_jagssummary.csv", sep = ""))
+write.csv(countFit.out, paste0(AOU, "_fixed_jagssummary.csv", sep = ""))
+
+dictmp <- c(AOU, "fixed", countFit$BUGSoutput$DIC)
+dics <- rbind(dics, dictmp)
 
 Sys.time()
 
@@ -126,7 +137,7 @@ nobs <- max(ix)            # no. observers
 cat("model{
     for(i in 1:n){
     y[i] ~ dpois(lambda[i])
-    lambda[i] <- exp(b1*X[i, 2] + b2*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
+    lambda[i] <- exp(b1*X[i, 2] + b2*X[i,2]*X[i, 3] + b3*X[i, 5] + a1[ix[i]]*X[i, 4])
     }
     
     for(j in 1:nobs){
@@ -152,23 +163,28 @@ parInit <- function() {
 
 Sys.time()
 countRE <- jags(data=countData, inits=parInit, param=parNamesRE,
-                n.iter=20000, n.burnin=5000, model.file="countsRE.txt")
+                n.iter=40000, n.burnin=20000, model.file="countsRE.txt")
 #3.5 hours for bobwhite
 Sys.time()
 rePars <- getJagsPars(countRE)
 fixed  <- rePars$fixed
 beta   <- fixed[1:4,1] 
 alpha  <- rePars$mean
-write.csv(fixed, paste0(aou, "_beta_jagsRE.csv", sep = ""), row.names = T)
-write.csv(alpha, paste0(aou, "_alpha_jagsRE.csv", sep = ""))
+
+dicRE <- c(AOU, "randomefx", countRE$BUGSoutput$DIC)
+dics <- rbind(dics, dicRE)
+
+write.csv(fixed, paste0(AOU, "_beta_jagsRE.csv", sep = ""), row.names = T)
+write.csv(alpha, paste0(AOU, "_alpha_jagsRE.csv", sep = ""))
 
 #calculate strata specific abundance indices
-counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$t) #model with RE
+counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$strata*counts.merge$t) #model with RE
 fixedb1 <- countFit$BUGSoutput$mean$b1
 fixedb2 <- countFit$BUGSoutput$mean$b2
-counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$t)
+counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$strata*counts.merge$t)
 
 results <- rbind(results, counts.merge)
 }
 
+write.csv(dics, "DIC_all_spp_models.csv", row.names = F)
 write.csv(results, "counts_w_modeloutput.csv", row.names = F)
