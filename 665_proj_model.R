@@ -7,8 +7,15 @@ library(geosphere)
 library(maps)
 library(rgdal)
 library(rgeos)
+library(gmailr)
 
 source("clarkFunctions2018.r")
+
+##Send text
+mime() %>%
+  to("8152452502@txt.att.net") %>%
+  from("gracedicecco11@gmail.com") %>%
+  text_body("For loop complete") -> text_msg
 
 #Read in BBS data
 ##Note: on mac once connected to Bioark server, path is "/Volumes/hurlbertlab/Databases/BBS/2017/filename.csv"
@@ -41,7 +48,7 @@ colnames(dics) <- c("aou", "jags", "dic")
 
 spp15 <- species[1:15, ]
 
-for(i in 1:1) {
+for(i in 7:15) {
   AOU <- spp15$aou[i]
 #Subset counts by species
 counts.short <- bbscounts %>%
@@ -77,7 +84,7 @@ counts.merge$firstyr <- firstyr
 
 Sys.time()
 
-#JAGS model of counts with random effects for year and obsroute
+#JAGS models of counts
 s <- as.character(paste0(counts.merge$statenum.x, counts.merge$bcr, sep = ""))
 sall <- sort(unique(s))
 is <- match(s, sall)
@@ -116,7 +123,7 @@ cat("model{
     ", fill = T, file = "countsFixed.txt"
 )
 
-countData <- list(y = y, X = X, n = n)
+countData <- list(y = y, X = X, n = n, is = is, nstrata = nstrata)
 parNames <- c("b1", "b2", "b3")
 countFit <- jags(data = countData, param = parNames,
                  n.iter = 10000, n.burnin = 2500, model.file = "countsFixed.txt")
@@ -149,8 +156,8 @@ for(k in 1:nstrata) {
     b2[k] ~ dnorm(0.0, 1000)
 }
     
-    for(j in 1:nobs){
-    a1[j] ~ dnorm(0.0, sigma)
+    for(m in 1:nobs){
+    a1[m] ~ dnorm(0.0, sigma)
     }
     
     sigma ~ dgamma(0.001, 1000)
@@ -160,12 +167,12 @@ for(k in 1:nstrata) {
     ", fill = T, file = "countsRE.txt"
 )
 
-countData   <- list(y = y, X = X, ix = ix, nobs = nobs, n = n)
+countData   <- list(y = y, X = X, ix = ix, nobs = nobs, is = is, nstrata = nstrata, n = n)
 
 parNamesRE <- c('b1','b2','b3','a1','sigma')
 
 parInit <- function() {
-  list(b1 = rnorm(1,0,1), b2 = rnorm(1,0,1), b3 = rnorm(1,0,1)) 
+  list(b1 = rnorm(nstrata,0,1), b2 = rnorm(nstrata,0,1), b3 = rnorm(1,0,1)) 
 }
 
 Sys.time()
@@ -175,23 +182,26 @@ countRE <- jags(data=countData, inits=parInit, param=parNamesRE,
 Sys.time()
 rePars <- getJagsPars(countRE)
 fixed  <- rePars$fixed
-beta   <- fixed[1:4,1] 
-alpha  <- rePars$mean
+beta   <- na.omit(rePars$mean[, 2:3])
+alpha  <- rePars$mean[, 1]
 
 dicRE <- c(AOU, "randomefx", countRE$BUGSoutput$DIC)
 dics <- rbind(dics, dicRE)
 
-write.csv(fixed, paste0(AOU, "_beta_jagsRE.csv", sep = ""), row.names = T)
+write.csv(fixed, paste0(AOU, "_fixed_jagsRE.csv", sep = ""), row.names = T)
+write.csv(beta, paste0(AOU, "_beta_jagsRE.csv", sep = ""), row.names = T)
 write.csv(alpha, paste0(AOU, "_alpha_jagsRE.csv", sep = ""))
 
 #calculate strata specific abundance indices
-#counts.merge$abundind <- exp(beta[1]*counts.merge$strata + beta[2]*counts.merge$strata*counts.merge$t) #model with RE
-#fixedb1 <- countFit$BUGSoutput$mean$b1
-#fixedb2 <- countFit$BUGSoutput$mean$b2
-#counts.merge$fixedabundind <- exp(fixedb1*counts.merge$strata + fixedb2*counts.merge$strata*counts.merge$t)
+counts.merge$abundind <- exp(beta[counts.merge$strata, 1] + beta[counts.merge$strata, 2]*counts.merge$t) #model with RE
+fixedb1 <- countFit$BUGSoutput$mean$b1
+fixedb2 <- countFit$BUGSoutput$mean$b2
+counts.merge$fixedabundind <- exp(fixedb1[counts.merge$strata] + fixedb2[counts.merge$strata]*counts.merge$t)
 
-#results <- rbind(results, counts.merge)
+results <- rbind(results, counts.merge)
 }
 
 write.csv(dics, "DIC_all_spp_models.csv", row.names = F)
-#write.csv(results, "counts_w_modeloutput.csv", row.names = F)
+write.csv(results, "counts_w_modeloutput.csv", row.names = F)
+send_message(text_msg)
+
