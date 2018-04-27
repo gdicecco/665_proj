@@ -403,6 +403,15 @@ dbetaBinom <- function(x, m, a=NULL, b=NULL, mu=NULL, log=F){
   segments(xx[y1], yy[y1], xx[y2], yy[y2], col=cf[ycol],lwd=lwd,lty=lty)
 }
 
+.getColor <- function(col,trans){
+  
+  # trans - transparency fraction [0, 1]
+  
+  tmp <- col2rgb(col)
+  rgb(tmp[1,], tmp[2,], tmp[3,], maxColorValue = 255, 
+      alpha = 255*trans, names = paste(col,trans,sep='_'))
+}
+
 .combineFacLevels <- function(xfactor,fname=NULL, 
                               aname = 'reference', vminF=1){
   tmp <- as.character(xfactor)

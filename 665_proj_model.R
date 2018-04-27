@@ -309,6 +309,42 @@ ggplot(firsts, aes(x = aou, y = exp(mean))) + geom_point() + ylab("First year ob
   geom_errorbar(aes(ymin = exp(X2.5.), ymax = exp(X97.5.))) +
   facet_grid(~model, labeller = as_labeller(modnames)) + theme_bw()
 
-#### Calculate weighted abund indices and plot centroid movement ####
+# Plot empirical and predicted abundance on a map
 
+data <- read.csv("counts_w_modeloutput.csv")
 
+# Greater roadrunner
+
+roadrun <- data %>% 
+  filter(aou == 3850) %>%
+  group_by(latitude, longitude, stateroute) %>%
+  summarize(meancount = mean(stoptotal), meanre = mean(abundind), meanfixed = mean(fixedabundind))
+
+par(mfrow = c(1,1))
+longs = c(-125,-85)
+lats = c(26,40)
+
+# Raw counts
+rbPal <- colorRampPalette(c("blue","red"))
+roadrun$col <- rbPal(10)[as.numeric(cut(roadrun$meancount, breaks = 10))]
+
+plot(bcrshp[bcrshp$WATER == 3 & bcrshp$COUNTRY == "USA",], xlim = longs, ylim = lats, border = "gray73", col = "gray95")
+points(roadrun$longitude, roadrun$latitude, pch = 16, col = roadrun$col)
+legend("bottomleft",title="Abund.",legend=c(1:10),col =rbPal(10),pch=20)
+
+# Fixed effects
+rbPal <- colorRampPalette(c("blue","red"))
+roadrun$col <- rbPal(10)[as.numeric(cut(roadrun$meanfixed, breaks = 10))]
+
+plot(bcrshp[bcrshp$WATER == 3 & bcrshp$COUNTRY == "USA",], xlim = longs, ylim = lats, border = "gray73", col = "gray95")
+points(roadrun$longitude, roadrun$latitude, pch = 16, col = roadrun$col)
+legend("bottomleft",title="Abund.",legend=c(1:10),col =rbPal(10),pch=20)
+
+# Random effects 
+
+rbPal <- colorRampPalette(c("blue","red"))
+roadrun$col <- rbPal(10)[as.numeric(cut(roadrun$meanre, breaks = 10))]
+
+plot(bcrshp[bcrshp$WATER == 3 & bcrshp$COUNTRY == "USA",], xlim = longs, ylim = lats, border = "gray73", col = "gray95")
+points(roadrun$longitude, roadrun$latitude, pch = 16, col = roadrun$col)
+legend("bottomleft",title="Abund.",legend=c(1:10),col =rbPal(10),pch=20)
