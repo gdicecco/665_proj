@@ -13,7 +13,7 @@ for(k in 1:nstrata) {
     a1[m] ~ dnorm(0.0, sigma)
     }
     
-    sigma ~ dgamma(0.001, 1000)
+    sigma ~ dgamma(1, 1000)
 
     b3 ~ dnorm(0.0, 1000)
     }

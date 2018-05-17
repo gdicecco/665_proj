@@ -7,15 +7,8 @@ library(geosphere)
 library(maps)
 library(rgdal)
 library(rgeos)
-library(gmailr)
 
 source("clarkFunctions2018.r")
-
-##Send text
-mime() %>%
-  to("8152452502@txt.att.net") %>%
-  from("gracedicecco11@gmail.com") %>%
-  text_body("For loop complete") -> text_msg
 
 #Read in BBS data
 ##Note: on mac once connected to Bioark server, path is "/Volumes/hurlbertlab/Databases/BBS/2017/filename.csv"
@@ -46,10 +39,14 @@ colnames(results) <- c("stateroute", "year", "statenum.x", "obsn", "latitude", "
 dics <- matrix(0, ncol = 3)
 colnames(dics) <- c("aou", "jags", "dic")
 
+pars.results <- matrix(0, ncol = 6)
+colnames(pars.results) <- c("aou", "model", "param", "mean", "cilo", "cihi")
+
 spp15 <- species[1:15, ]
 
-for(i in 1:10) {
+for(i in 1) {
   AOU <- spp15$aou[i]
+
 #Subset counts by species
 counts.short <- bbscounts %>%
   filter(year >= 1969) %>%
@@ -79,10 +76,8 @@ for(i in 2:nrow(counts.merge)) {
   print(paste(i, "out of", nrow(counts.merge), "; current time:", curr.time,
               "; estimated end time:", estimated.end))
 }
-#1 spp - about 10 minutes
-counts.merge$firstyr <- firstyr
 
-Sys.time()
+counts.merge$firstyr <- firstyr
 
 #JAGS models of counts
 s <- as.character(paste0(counts.merge$statenum.x, counts.merge$bcr, sep = ""))
@@ -127,22 +122,25 @@ countData <- list(y = y, X = X, n = n, is = is, nstrata = nstrata)
 parNames <- c("b1", "b2", "b3")
 countFit <- jags(data = countData, param = parNames,
                  n.iter = 10000, n.burnin = 2500, model.file = "countsFixed.txt")
-# 1 spp - < 2 hours
-print(countFit)
+
 countFit.out <- countFit$BUGSoutput$summary
-write.csv(countFit.out, paste0(AOU, "_fixed_jagssummary.csv", sep = ""))
+names <- rownames(countFit.out)
+countFit.df <- as.data.frame(countFit.out)
+parstmp <- data.frame(aou = AOU, 
+                      model = "fixedEffects", 
+                      param = names,
+                      mean = countFit.df$mean,
+                      cilo = countFit.df$'2.5%',
+                      cihi = countFit.df$'97.5%')
+
+pars.results <- rbind(pars.results, parstmp)
+
 
 dictmp <- c(AOU, "fixed", countFit$BUGSoutput$DIC)
 dics <- rbind(dics, dictmp)
 
-Sys.time()
-
-par(mar=c(3,3,1,1))
-plot( as.mcmc(countFit) )
-
-#JAGS random effects
-
-#JAGS hierarchical
+#JAGS hierarchica
+l
 nobs <- max(ix)            # no. observers
 
 cat("model{
@@ -160,7 +158,7 @@ for(k in 1:nstrata) {
     a1[m] ~ dnorm(0.0, sigma)
     }
     
-    sigma ~ dgamma(0.001, 1000)
+    sigma ~ dgamma(1, 1000)
 
     b3 ~ dnorm(0.0, 1000)
     }
@@ -175,22 +173,24 @@ parInit <- function() {
   list(b1 = rnorm(nstrata,0,1), b2 = rnorm(nstrata,0,1), b3 = rnorm(1,0,1)) 
 }
 
-Sys.time()
 countRE <- jags(data=countData, inits=parInit, param=parNamesRE,
                 n.iter=40000, n.burnin=20000, model.file="countsRE.txt")
-#3.5 hours for bobwhite
-Sys.time()
+
 rePars <- getJagsPars(countRE)
-fixed  <- rePars$fixed
-beta   <- na.omit(rePars$mean[, 2:3])
-alpha  <- rePars$mean[, 1]
+
+fixed.df <- as.data.frame(rePars$fixed)
+pars.df <- data.frame(aou = AOU, model = "randomEffects", 
+                      param = c("b3", "deviance", "sigma", 
+                                           rep("a1", length(rePars$mean[, 1])), rep("b1", length(rePars$mean[, 2])),
+                                           rep("b2", length(rePars$mean[, 3]))),
+                      mean = c(fixed.df$mean, rePars$mean[, 1], rePars$mean[, 2], rePars$mean[, 3]),
+                      cilo = c(fixed.df$'2.5%', rePars$ciLo[, 1], rePars$ciLo[, 2], rePars$ciLo[, 3]),
+                      cihi = c(fixed.df$'97.5%', rePars$ciHi[, 1], rePars$ciHi[, 2], rePars$ciHi[, 3]))
+  
+pars.results <- rbind(pars.results, pars.df)
 
 dicRE <- c(AOU, "randomefx", countRE$BUGSoutput$DIC)
 dics <- rbind(dics, dicRE)
-
-write.csv(fixed, paste0(AOU, "_fixed_jagsRE.csv", sep = ""), row.names = T)
-write.csv(beta, paste0(AOU, "_beta_jagsRE.csv", sep = ""), row.names = T)
-write.csv(alpha, paste0(AOU, "_alpha_jagsRE.csv", sep = ""))
 
 #calculate strata specific abundance indices
 counts.merge$abundind <- exp(beta[counts.merge$strata, 1] + beta[counts.merge$strata, 2]*counts.merge$t) #model with RE
@@ -199,12 +199,11 @@ fixedb2 <- countFit$BUGSoutput$mean$b2
 counts.merge$fixedabundind <- exp(fixedb1[counts.merge$strata] + fixedb2[counts.merge$strata]*counts.merge$t)
 
 results <- rbind(results, counts.merge)
-send_message(text_msg)
 }
 
-write.csv(dics, "DIC_all_spp_models.csv", row.names = F)
-write.csv(results, "counts_w_modeloutput.csv", row.names = F)
-
+write.csv(dics[-1, ], "DIC_all_spp_models.csv", row.names = F)
+write.csv(results[-1, ], "counts_w_modeloutput.csv", row.names = F)
+write.csv(pars.results[-1, ], "model_parameters.csv", row.names = F)
 
 #### Figures for presentation #####
 # delta DIC
