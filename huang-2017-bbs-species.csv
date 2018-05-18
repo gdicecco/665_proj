@@ -1,0 +1,36 @@
+species,aou,shiftdistance,velocity,direction,abundance
+Northern Bobwhite,2890,382,8.68,northwest,decreasing
+Scaled Quail,2930,49,1.11,west,decreasing
+California Quail,2940,66,1.5,east,increasing
+Sharp-tailed Grouse,3080,243,5.52,east,stable
+Wild Turkey,3100,743,16.89,northeast,increasing
+Common Ground-Dove,3200,598,13.59,west,stable
+Inca Dove,3210,463,10.52,east,increasing
+Black Vulture,3260,339,7.7,northwest,increasing
+Great Horned Owl,3750,935,21.25,southeast,decreasing
+Greater Roadrunner,3850,229,5.2,east,stable
+Hairy Woodpecker,3930,198,4.5,east,increasing
+Downy Woodpecker,3940,113,2.57,east,increasing
+Pileated Woodpecker,4050,286,6.5,northeast,increasing
+Red-bellied Woodpecker,4090,137,3.11,northwest,increasing
+Steller's Jay,4780,97,2.2,northwest,stable
+Common Raven,4860,308,7,west,increasing
+Fish Crow,4900,199,4.52,northwest,increasing
+Great-tailed Grackle,5120,294,6.68,northwest,increasing
+Lesser Goldfinch,5300,269,6.11,northwest,stable
+Rufous-crowned Sparrow,5800,286,6.5,northwest,decreasing
+Northern Cardinal,5930,65,1.48,northwest,increasing
+Pyrrhuloxia,5940,230,5.23,northwest,decreasing
+Northern Mockingbird,7030,51,1.16,north,decreasing
+Curve-billed Thrasher,7070,199,4.52,north,decreasing
+Carolina Wren,7180,94,2.14,northwest,increasing
+White-breasted Nuthatch,7270,369,8.39,east,increasing
+Brown-headed Nuthatch,7290,122,2.78,northeast,stable
+Pygmy Nuthatch,7300,237,5.39,north,stable
+Tufted Titmouse,7310,99,2.25,northeast,increasing
+Black-capped Chickadee,7350,813,18.48,east,increasing
+Carolina Chickadee,7360,23,0.52,north,decreasing
+Mountain Chickadee,7380,177,4.02,northwest,decreasing
+Chestnut-backed Chickadee,7410,27,0.61,east,decreasing
+Bushtit,7430,145,3.3,east,stable
+Verdin,7460,258,5.83,southeast,decreasing

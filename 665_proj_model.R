@@ -139,7 +139,7 @@ pars.results <- rbind(pars.results, parstmp)
 dictmp <- c(AOU, "fixed", countFit$BUGSoutput$DIC)
 dics <- rbind(dics, dictmp)
 
-#JAGS hierarchica
+#JAGS hierarchical
 l
 nobs <- max(ix)            # no. observers
 
