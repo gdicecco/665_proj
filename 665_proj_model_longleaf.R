@@ -1,11 +1,9 @@
 # Script for running fixed effects and hierarchical models on Longleaf
 
-setwd("/proj/hurlbertlab/gdicecco/665_proj/")
-
 library(dplyr)
 library(R2jags)
 
-source("clarkFunctions2018.r")
+source("/proj/hurlbertlab/gdicecco/665_proj/clarkFunctions2018.r")
 
 #Read in BBS data
 routes <- read.csv("/proj/hurlbertlab/bbs/bbs_routes_20170712.csv")
@@ -13,7 +11,7 @@ bbscounts <- read.csv("/proj/hurlbertlab/bbs/bbs_counts_20170712.csv")
 weather <- read.csv("/proj/hurlbertlab/bbs/bbs_weather_20170712.csv")
 
 #Subset species - from Huang et al. 2017
-species <- read.csv("huang-2017-bbs-species.csv", header = TRUE)
+species <- read.csv("/proj/hurlbertlab/gdicecco/665_proj/huang-2017-bbs-species.csv", header = TRUE)
 
 #Remove routes weather runtype = 0
 routes$stateroute <- routes$statenum*1000 + routes$route
@@ -193,6 +191,6 @@ for(i in 1) {
   results <- rbind(results, counts.merge)
   }
 
-write.csv(dics[-1, ], "DIC_all_spp_models.csv", row.names = F)
-write.csv(results[-1, ], "counts_w_modeloutput.csv", row.names = F)
-write.csv(pars.results[-1, ], "model_parameters.csv", row.names = F)
+write.csv(dics[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/DIC_all_spp_models.csv", row.names = F)
+write.csv(results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/counts_w_modeloutput.csv", row.names = F)
+write.csv(pars.results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/model_parameters.csv", row.names = F)
