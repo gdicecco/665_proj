@@ -34,6 +34,7 @@ colnames(pars.results) <- c("aou", "model", "param", "mean", "cilo", "cihi")
 
 spp15 <- species[1:15, ]
 
+setwd("/proj/hurlbertlab/gdicecco/665_proj/")
 for(i in 1) {
   AOU <- spp15$aou[i]
   
