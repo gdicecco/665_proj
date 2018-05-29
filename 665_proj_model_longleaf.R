@@ -131,7 +131,7 @@ for(i in 1) {
   dics <- rbind(dics, dictmp)
   
   #JAGS hierarchical
-  l
+
   nobs <- max(ix)            # no. observers
   
   cat("model{

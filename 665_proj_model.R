@@ -140,7 +140,7 @@ dictmp <- c(AOU, "fixed", countFit$BUGSoutput$DIC)
 dics <- rbind(dics, dictmp)
 
 #JAGS hierarchical
-l
+
 nobs <- max(ix)            # no. observers
 
 cat("model{
