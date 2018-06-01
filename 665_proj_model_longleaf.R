@@ -169,6 +169,8 @@ for(i in 1) {
   
   rePars <- getJagsPars(countRE)
   
+  beta   <- na.omit(rePars$mean[, 2:3])
+  
   fixed.df <- as.data.frame(rePars$fixed)
   pars.df <- data.frame(aou = AOU, model = "randomEffects", 
                         param = c("b3", "deviance", "sigma", 
