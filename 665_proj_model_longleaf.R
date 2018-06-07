@@ -32,11 +32,9 @@ colnames(dics) <- c("aou", "jags", "dic")
 pars.results <- matrix(0, ncol = 6)
 colnames(pars.results) <- c("aou", "model", "param", "mean", "cilo", "cihi")
 
-spp15 <- species[1:15, ]
-
 setwd("/proj/hurlbertlab/gdicecco/665_proj/")
-for(i in 1) {
-  AOU <- spp15$aou[i]
+for(i in 1:length(species$aou)) {
+  AOU <- species$aou[i]
   
   #Subset counts by species
   counts.short <- bbscounts %>%
