@@ -48,7 +48,6 @@ for(i in 1:length(species$aou)) {
   counts.merge <- arrange(counts.merge, year)
   
   #Loop takes some time
-  init.time = Sys.time()
   firstyr <- c(1)
   for(i in 2:nrow(counts.merge)) {
     d <- counts.merge[i, ]
@@ -58,12 +57,6 @@ for(i in 1:length(species$aou)) {
     if (uniq$obsroute %in% uniq2$obsroute) {
       firstyr <- c(firstyr, 0)
     } else firstyr <- c(firstyr, 1)
-    curr.time = Sys.time()
-    elapsed = curr.time - init.time
-    percelltime = elapsed/i
-    estimated.end = (nrow(counts.merge) - i)*percelltime + curr.time
-    print(paste(i, "out of", nrow(counts.merge), "; current time:", curr.time,
-                "; estimated end time:", estimated.end))
   }
   
   counts.merge$firstyr <- firstyr
@@ -190,6 +183,8 @@ for(i in 1:length(species$aou)) {
   counts.merge$fixedabundind <- exp(fixedb1[counts.merge$strata] + fixedb2[counts.merge$strata]*counts.merge$t)
   
   results <- rbind(results, counts.merge)
+  print(paste0("Completed species", AOU))
+  print(Sys.time())
   }
 
 write.csv(dics[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/DIC_all_spp_models.csv", row.names = F)
