@@ -147,7 +147,7 @@ for(i in 1:length(species$aou)) {
       a1[m] ~ dnorm(0.0, sigma)
       }
       
-      sigma ~ dgamma(1, 1000)
+      sigma ~ dgamma(0.1, 1000)
       
       b3 ~ dnorm(0.0, 1000)
       }
