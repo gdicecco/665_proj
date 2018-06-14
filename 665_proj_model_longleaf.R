@@ -78,9 +78,9 @@ for(i in 1:length(species$aou)) {
   ix <- match(z, zall)
   counts.merge$ix <- ix
   
-  counts <- model.frame(stoptotal ~ strata + t + ix + firstyr, counts.merge)
-  X <- model.matrix(stoptotal ~ strata + t + ix + firstyr, counts)
-  y <- counts$stoptotal
+  counts <- model.frame(speciestotal ~ strata + t + ix + firstyr, counts.merge)
+  X <- model.matrix(speciestotal ~ strata + t + ix + firstyr, counts)
+  y <- counts$speciestotal
   n <- length(y)
   
   #JAGS fixed effects
