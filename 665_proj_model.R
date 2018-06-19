@@ -96,9 +96,9 @@ zall <- sort(unique(z))
 ix <- match(z, zall)
 counts.merge$ix <- ix
 
-counts <- model.frame(stoptotal ~ strata + t + ix + firstyr, counts.merge)
-X <- model.matrix(stoptotal ~ strata + t + ix + firstyr, counts)
-y <- counts$stoptotal
+counts <- model.frame(speciestotal ~ strata + t + ix + firstyr, counts.merge)
+X <- model.matrix(speciestotal ~ strata + t + ix + firstyr, counts)
+y <- counts$speciestotal
 n <- length(y)
 
 #JAGS fixed effects
@@ -319,7 +319,7 @@ data <- read.csv("counts_w_modeloutput.csv")
 roadrun <- data %>% 
   filter(aou == 3850) %>%
   group_by(latitude, longitude, stateroute) %>%
-  summarize(meancount = mean(stoptotal), meanre = mean(abundind), meanfixed = mean(fixedabundind))
+  summarize(meancount = mean(speciestotal), meanre = mean(abundind), meanfixed = mean(fixedabundind))
 
 par(mfrow = c(1,1))
 longs = c(-125,-85)
