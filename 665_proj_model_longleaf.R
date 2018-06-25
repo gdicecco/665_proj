@@ -184,7 +184,10 @@ for(i in 1:length(species$aou)) {
     counts.merge$fixedabundind <- exp(fixedb1[counts.merge$strata] + fixedb2[counts.merge$strata]*counts.merge$t)
     
     results <- rbind(results, counts.merge)
-  }, error = function(i) {print("ERROR : SPECIES # ", i, sep = "")})
+    
+    print(paste0("COMPLETED SPECIES # ", AOU))
+    
+  }, error = function(i) {print(paste0("ERROR : SPECIES # ", i))})
   }
 
 write.csv(dics[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/DIC_all_spp_models.csv", row.names = F)
