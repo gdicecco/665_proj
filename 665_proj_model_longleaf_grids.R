@@ -28,13 +28,6 @@ routes.short$lat.window <- scale1*floor(routes.short$latitude/scale1) + scale1/2
 routes.short$lon.window <- scale1*floor(routes.short$longitude/scale1) + scale1/2
 routes.short$spatial.window <- paste(routes.short$lat.window, routes.short$lon.window, sep = "")
 
-route.windows <- routes.short %>%
-  group_by(spatial.window) %>%
-  summarize(total = n()) %>%
-  filter(total == 10)
-
-routes.subs <- filter(routes.short, spatial.window %in% route.windows$spatial.window)
-
 results <- matrix(0, ncol = 27)
 colnames(results) <- c("stateroute", "year", "statenum.x", "obsn", "latitude", "longitude",
                        "bcr", "record_id", "countrynum", "statenum.y", "route", "rpid", "aou",
@@ -54,9 +47,8 @@ for(i in 1:length(species$aou)) {
     #Subset counts by species
     counts.short <- bbscounts %>%
       filter(year >= 1969) %>%
-      filter(aou == AOU) %>%
-      filter(stateroute %in% routes.subs$stateroute)
-    counts.merge <- merge(routes.subs, counts.short, by = c("stateroute", "year"))
+      filter(aou == AOU) 
+    counts.merge <- merge(routes.short, counts.short, by = c("stateroute", "year"))
     
     #Add obs-route ID and dummy variable for first year observers
     counts.merge$obsroute <- paste0(counts.merge$obsn, counts.merge$stateroute, sep = "")
