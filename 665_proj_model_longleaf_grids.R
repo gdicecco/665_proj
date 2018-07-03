@@ -1,5 +1,5 @@
 # Script for running fixed effects and hierarchical models on Longleaf
-# Strata
+# Grids
 
 library(dplyr)
 library(R2jags)
@@ -22,6 +22,19 @@ RT1.routes <- merge(RT1, routes[ , c("statenum", "stateroute", "latitude", "long
 routes.short <- subset(RT1.routes, year >= 1969, select = c("statenum","stateroute", "year", "obsn", "latitude", "longitude", "bcr"))
 bbscounts$stateroute <- bbscounts$statenum*1000 + bbscounts$route
 
+# Group by 1 degree latlon windows
+scale1 <- 1
+routes.short$lat.window <- scale1*floor(routes.short$latitude/scale1) + scale1/2
+routes.short$lon.window <- scale1*floor(routes.short$longitude/scale1) + scale1/2
+routes.short$spatial.window <- paste(routes.short$lat.window, routes.short$lon.window, sep = "")
+
+route.windows <- routes.short %>%
+  group_by(spatial.window) %>%
+  summarize(total = n()) %>%
+  filter(total == 10)
+
+routes.subs <- filter(routes.short, spatial.window %in% route.windows$spatial.window)
+
 results <- matrix(0, ncol = 27)
 colnames(results) <- c("stateroute", "year", "statenum.x", "obsn", "latitude", "longitude",
                        "bcr", "record_id", "countrynum", "statenum.y", "route", "rpid", "aou",
@@ -41,8 +54,9 @@ for(i in 1:length(species$aou)) {
     #Subset counts by species
     counts.short <- bbscounts %>%
       filter(year >= 1969) %>%
-      filter(aou == AOU)
-    counts.merge <- merge(routes.short, counts.short, by = c("stateroute", "year"))
+      filter(aou == AOU) %>%
+      filter(stateroute %in% routes.subs$stateroute)
+    counts.merge <- merge(routes.subs, counts.short, by = c("stateroute", "year"))
     
     #Add obs-route ID and dummy variable for first year observers
     counts.merge$obsroute <- paste0(counts.merge$obsn, counts.merge$stateroute, sep = "")
@@ -64,7 +78,7 @@ for(i in 1:length(species$aou)) {
     counts.merge$firstyr <- firstyr
     
     #JAGS models of counts
-    s <- as.character(paste0(counts.merge$statenum.x, counts.merge$bcr, sep = ""))
+    s <- as.character(paste0(counts.merge$statenum.x, counts.merge$spatial.window, sep = ""))
     sall <- sort(unique(s))
     is <- match(s, sall)
     counts.merge$strata <- is
@@ -188,9 +202,9 @@ for(i in 1:length(species$aou)) {
     
     print(paste0("COMPLETED SPECIES # ", AOU))
     
-  }, error = function(i) {print(paste0("ERROR : SPECIES # ", i))})
+    }, error = function(i) {print(paste0("ERROR : SPECIES # ", i))})
   }
 
-write.csv(dics[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/DIC_all_spp_models.csv", row.names = F)
-write.csv(results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/counts_w_modeloutput.csv", row.names = F)
-write.csv(pars.results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/model_parameters.csv", row.names = F)
+write.csv(dics[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/DIC_all_spp_models_grids.csv", row.names = F)
+write.csv(results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/counts_w_modeloutput_grids.csv", row.names = F)
+write.csv(pars.results[-1, ], "/proj/hurlbertlab/gdicecco/665_proj/model_parameters_grids.csv", row.names = F)
